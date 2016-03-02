@@ -229,12 +229,11 @@ function render(src,data)
     this.getCommand('if',true);
 
     this.if.final = [];
-    console.log(this.if.length);
     for (var i = 0; i < this.if.length; i++) {
       var result = null;
-      console.log('my if '+ this.if[i]);
+
       var isMulti = ( (this.if.attrs[i][0].indexOf('||') > -1) || (this.if.attrs[i][0].indexOf('&&') > -1) ) ? true : false;
-      console.log(isMulti);
+
       if(isMulti){
         var soWhat = (this.if.attrs[i][0].indexOf('||') > -1) ? 'or' : 'and';
         var conditions;
@@ -248,10 +247,10 @@ function render(src,data)
         }
         for (var c = 0; c < conditions.length; c++) {
           var x = this.parseIfConditions(conditions[c]);
-          console.log(x);
+
           switch (soWhat) {
             case 'and':
-            console.log('and :'+x);
+
             // and all must be true
               if(x == false){
                 result = false;break;
@@ -260,7 +259,7 @@ function render(src,data)
               }
               break;
             case 'or':
-            console.log('hELRE!' + x);
+
             // or if have one true the result will be true.
               if(x == true){
                 result = true;break;
@@ -273,32 +272,37 @@ function render(src,data)
       }else{
         result = this.parseIfConditions(this.if.attrs[i][0]);
       }
-      console.log('If : '+this.if[i]+ ' , result : '+result);
+
       if(result == false){
-        console.log(i);
+
         this.src = this.src.replace(this.if[i],this.getElse(this.if[i]));
         //this.if.splice(i,1);
-        //console.log(this.if);
+        //
       }else{
-        this.if.final.push([this.if[i],this.if.text[i]]);
-        console.log(this.if.final);
+
+        this.if.final.push([this.if[i],this.removeElse(this.if.text[i])]);
+
       }
     }
-    console.log(this.if.final);
+
   }
 
   this.parseIfConditions = function(cond){
     var opreators = ['==','!=','>','<','<=','>='];
-    var cArr = cond.trim().split(' ');
-    console.log(cArr);
-    if(cArr.length == 3){
+    var cArr = cond.trim().split(new RegExp('(.+)(==|!=|<=|>=|>|<)(.+)','ig')).filter(function(e){
+      return /\S/.test(e); // remove white space element.
+    }).map(function(e){
+      return e.trim(); // trim all element
+    });
+
+    if(cArr.length){
       var op = cArr[1];
       if(opreators.indexOf(op) > -1){
         if(/#(.*)/.test(cArr[0]) || /#(.*)/.test(cArr[2])){
           var whichOne = /#(.*)/.test(cArr[0]) ? 0 : 2;
           cArr[whichOne] = this.getVarsVal(cArr[whichOne].replace('#',''));
         }
-        console.log(cArr[0] + cArr[2]);
+
         switch (op) {
           case '==':
             return cArr[0] == cArr[2];
@@ -331,11 +335,11 @@ function render(src,data)
   this.getElse = function(src){
     patt = '\{\{\@else\}\}([\\s\\S]*?)\{\{\@end\}\}';
     patt = new RegExp(patt,'gi');
-    console.log(src);
-    if(patt.test(src))
-      return src.match(patt)[0].replace(new RegExp('\{\{\@' + 'else' + '\}\}','gi'),'').replace(/\{\{\@end\}\}/gi,'').trim();
-    else
-      return null
+    return patt.test(src) ? src.match(patt)[0].replace(new RegExp('\{\{\@' + 'else' + '\}\}','gi'),'').replace(/\{\{\@end\}\}/gi,'').trim() : null;
+  }
+
+  this.removeElse = function(src){
+    return src.replace(/\{\{\@else\}\}\s*(.*)/gi,'');
   }
   /**
   Check if variable is helper variable
@@ -380,7 +384,7 @@ function render(src,data)
     }
     this.parseVars();
 
-    console.log( this.src  );
+
 
     return this.src;
   }
