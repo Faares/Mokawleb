@@ -30,6 +30,9 @@ function Mokawleb(src,data)
     var patt = '\{\{\@' + command + '\s*(.*?)\}\}([\\s\\S]*?)\{\{\@end\}\}';
     var r = new RegExp(patt,'gi');
 
+    if(!source.match(r)){
+      return false;
+    }
     this[command] = source.match(r);
     this[command]['text'] = this[command].map(function(v){
       return v.replace(new RegExp('\{\{\@' + command + '\s*(.*)\}\}','gi'),'').replace(/\{\{\@end\}\}/gi,'').trim();
@@ -72,6 +75,8 @@ function Mokawleb(src,data)
       }
 
     }
+
+    return true;
   }
 
   /**
@@ -159,7 +164,8 @@ function Mokawleb(src,data)
   this.parseLoops = function(){
 
     // get all loops in source code.
-    this.getCommand('loop',true);
+    if(!this.getCommand('loop',true))
+      return false;
 
     // all processering loops is here!
     this.loop.final = [];
@@ -220,13 +226,18 @@ function Mokawleb(src,data)
       }
     }
 
+    for(var l=0;l < this.loop.length;l++){
+      this.src = this.src.replace(this.loop[l],this.loop.final[l].join(''));
+    }
+
     // returh all processering loop
     return this.loop.final;
   }
 
   this.parseIfs = function(){
 
-    this.getCommand('if',true);
+    if(!this.getCommand('if',true))
+      return false;
 
     this.if.final = [];
     for (var i = 0; i < this.if.length; i++) {
@@ -282,7 +293,9 @@ function Mokawleb(src,data)
 
       }
     }
-
+    for (var i = 0; i < this.if.final.length; i++) {
+      this.src = this.src.replace(this.if.final[i][0],this.if.final[i][1]);
+    }
   }
 
   this.parseIfConditions = function(cond){
@@ -373,12 +386,8 @@ function Mokawleb(src,data)
     this.parseIfs();
     this.parseLoops();
 
-    for(var l=0;l < this.loop.length;l++){
-      this.src = this.src.replace(this.loop[l],this.loop.final[l].join(''));
-    }
-    for (var i = 0; i < this.if.final.length; i++) {
-      this.src = this.src.replace(this.if.final[i][0],this.if.final[i][1]);
-    }
+
+
     this.parseVars();
 
 
